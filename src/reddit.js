@@ -1,12 +1,6 @@
-/**
- * Reach out to the reddit API, and get the first page of results from
- * r/aww. Filter out posts without readily available images or videos,
- * and return a random result.
- * @returns The url of an image or video which is cute.
- */
 export async function getCuteUrl() {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 2500); // 2.5 second timeout
+  const timeout = setTimeout(() => controller.abort(), 2500);
   
   try {
     const response = await fetch(redditUrl, {
@@ -14,6 +8,9 @@ export async function getCuteUrl() {
       headers: {
         'User-Agent': 'justinbeckwith:awwbot:v1.0.0 (by /u/justinblat)',
       },
+      // Add these to speed up the request:
+      priority: 'high',
+      cache: 'no-cache',
     });
     if (!response.ok) {
       let errorText = `Error fetching ${response.url}: ${response.status} ${response.statusText}`;
@@ -28,24 +25,17 @@ export async function getCuteUrl() {
       throw new Error(errorText);
     }
     const data = await response.json();
-    const posts = data.data.children
-      .map((post) => {
-        if (post.is_gallery) {
-          return '';
-        }
-        return (
-          post.data?.media?.reddit_video?.fallback_url ||
-          post.data?.secure_media?.reddit_video?.fallback_url ||
-          post.data?.url
-        );
-      })
-      .filter((post) => !!post);
-    const randomIndex = Math.floor(Math.random() * posts.length);
-    const randomPost = posts[randomIndex];
-    return randomPost;
+    // Filter and return immediately without intermediate array operations
+    for (const post of data.data.children) {
+      if (!post.is_gallery) {
+        const url = post.data?.media?.reddit_video?.fallback_url ||
+                   post.data?.secure_media?.reddit_video?.fallback_url ||
+                   post.data?.url;
+        if (url) return url; // Return first valid URL instead of collecting all
+      }
+    }
+    throw new Error('No valid posts found');
   } finally {
     clearTimeout(timeout);
   }
 }
-
-export const redditUrl = 'https://www.reddit.com/r/aww/hot.json';
