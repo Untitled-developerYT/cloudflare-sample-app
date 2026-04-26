@@ -59,13 +59,23 @@ router.post('/', async (request, env) => {
     // Most user commands will come as `APPLICATION_COMMAND`.
     switch (interaction.data.name.toLowerCase()) {
       case AWW_COMMAND.name.toLowerCase(): {
-        const cuteUrl = await getCuteUrl();
-        return new JsonResponse({
-          type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-          data: {
-            content: cuteUrl,
-          },
-        });
+        try {
+          const cuteUrl = await getCuteUrl();
+          return new JsonResponse({
+            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+            data: {
+              content: cuteUrl,
+            },
+          });
+        } catch (error) {
+          console.error('Error fetching cute URL:', error);
+          return new JsonResponse({
+            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+            data: {
+              content: 'Oops! Failed to fetch a cute image. Try again!',
+            },
+          });
+        }
       }
       case BOOM_COMMAND.name.toLowerCase(): {
         return new JsonResponse({
