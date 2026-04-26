@@ -3,6 +3,9 @@ name = 'cloudflare-sample-app'
 main = "./src/server.js"
 compatibility_date="2023-05-18"
 
+[build]
+command = "npm run register"
+
 # [secrets]
 # DISCORD_TOKEN
 # DISCORD_PUBLIC_KEY
