@@ -16,10 +16,14 @@ export async function getCuteUrl() {
       throw new Error(`Error fetching cat image: ${response.status} ${response.statusText}`);
     }
 
-    const data = await response.json();
-    const imageUrl = Array.isArray(data) ? data[0] : data?.[0];
+    const payload = await response.json();
+    const imageUrl = Array.isArray(payload)
+      ? payload[0]
+      : typeof payload === 'string'
+        ? payload
+        : payload?.[0] ?? payload?.url;
 
-    if (!imageUrl) {
+    if (!imageUrl || typeof imageUrl !== 'string') {
       throw new Error('No valid image found');
     }
 
