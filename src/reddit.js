@@ -1,30 +1,46 @@
+export const redditUrl = 'https://www.reddit.com/r/aww/hot.json?limit=10';
+
 export async function getCuteUrl() {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 2500);
 
   try {
-    const response = await fetch(
-      'https://shibe.online/api/cats?count=1&urls=true&httpsUrls=true',
-      {
-        signal: controller.signal,
-        headers: { Accept: 'application/json' },
-        priority: 'high',
-        cache: 'no-cache',
-      }
-    );
+    const response = await fetch(redditUrl, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'justinbeckwith:awwbot:v1.0.0 (by /u/justinblat)',
+      },
+      priority: 'high',
+      cache: 'no-cache',
+    });
 
     if (!response.ok) {
-      throw new Error(`Error fetching cat image: ${response.status} ${response.statusText}`);
+      let errorText = `Error fetching ${response.url}: ${response.status} ${response.statusText}`;
+      try {
+        const error = await response.text();
+        if (error) {
+          errorText = `${errorText} \n\n ${error}`;
+        }
+      } catch {
+        // ignore
+      }
+      throw new Error(errorText);
     }
 
     const data = await response.json();
-    const imageUrl = Array.isArray(data) ? data[0] : data?.[0];
 
-    if (!imageUrl) {
-      throw new Error('No valid image found');
+    for (const post of data.data.children) {
+      if (!post.is_gallery) {
+        const url =
+          post.data?.media?.reddit_video?.fallback_url ||
+          post.data?.secure_media?.reddit_video?.fallback_url ||
+          post.data?.url;
+
+        if (url) return url;
+      }
     }
 
-    return imageUrl;
+    throw new Error('No valid posts found');
   } finally {
     clearTimeout(timeout);
   }
