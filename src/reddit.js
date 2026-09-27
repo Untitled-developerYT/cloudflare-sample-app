@@ -3,7 +3,10 @@ export async function getCuteUrl() {
   const timeout = setTimeout(() => controller.abort(), 2500);
   
   try {
-    const response = await fetch(redditUrl, {
+    // Using Unsplash's free API to fetch random cute animal photos
+    const unsplashUrl = 'https://api.unsplash.com/photos/random?query=cute+animals&client_id=' + UNSPLASH_ACCESS_KEY;
+    
+    const response = await fetch(unsplashUrl, {
       signal: controller.signal,
       headers: {
         'User-Agent': 'justinbeckwith:awwbot:v1.0.0 (by /u/justinblat)',
@@ -25,16 +28,12 @@ export async function getCuteUrl() {
       throw new Error(errorText);
     }
     const data = await response.json();
-    // Filter and return immediately without intermediate array operations
-    for (const post of data.data.children) {
-      if (!post.is_gallery) {
-        const url = post.data?.media?.reddit_video?.fallback_url ||
-                   post.data?.secure_media?.reddit_video?.fallback_url ||
-                   post.data?.url;
-        if (url) return url; // Return first valid URL instead of collecting all
-      }
+    
+    // Unsplash returns a single photo object with a urls.regular property
+    if (data.urls?.regular) {
+      return data.urls.regular;
     }
-    throw new Error('No valid posts found');
+    throw new Error('No valid image found');
   } finally {
     clearTimeout(timeout);
   }
