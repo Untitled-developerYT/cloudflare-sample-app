@@ -3,39 +3,28 @@ export async function getCuteUrl() {
   const timeout = setTimeout(() => controller.abort(), 2500);
 
   try {
-    // No API key required: fetch a random cat image from a public endpoint.
-    const catUrl = 'https://shibe.online/api/cats?count=1&urls=true&httpsUrls=true';
-
-    const response = await fetch(catUrl, {
-      signal: controller.signal,
-      headers: {
-        Accept: 'application/json',
-      },
-      priority: 'high',
-      cache: 'no-cache',
-    });
+    const response = await fetch(
+      'https://shibe.online/api/cats?count=1&urls=true&httpsUrls=true',
+      {
+        signal: controller.signal,
+        headers: { Accept: 'application/json' },
+        priority: 'high',
+        cache: 'no-cache',
+      }
+    );
 
     if (!response.ok) {
-      let errorText = `Error fetching ${response.url}: ${response.status} ${response.statusText}`;
-      try {
-        const error = await response.text();
-        if (error) {
-          errorText = `${errorText} \n\n ${error}`;
-        }
-      } catch {
-        // ignore
-      }
-      throw new Error(errorText);
+      throw new Error(`Error fetching cat image: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json();
     const imageUrl = Array.isArray(data) ? data[0] : data?.[0];
 
-    if (imageUrl) {
-      return imageUrl;
+    if (!imageUrl) {
+      throw new Error('No valid image found');
     }
 
-    throw new Error('No valid cat image found');
+    return imageUrl;
   } finally {
     clearTimeout(timeout);
   }
